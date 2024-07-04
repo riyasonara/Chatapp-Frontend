@@ -10,11 +10,16 @@ import Title from "../shared/Title";
 import ChatList from "../specific/ChatList";
 import Profile from "../specific/Profile";
 import Header from "./Header";
+import { GetSocket } from "../../Socket";
+
 
 const AppLayout = () => (WrappedComponent) => {
   return (props) => {
     const params = useParams();
     const chatId = params.chatId;
+
+    const socket = GetSocket();
+
     const dispatch = useDispatch();
 
     const { isMobile } = useSelector((state) => state.misc);
@@ -23,11 +28,9 @@ const AppLayout = () => (WrappedComponent) => {
     const { isLoading, data, isError, error, refetch } = useMyChatsQuery("");
 
     useErrors([{ isError, error }]);
-    console.log(data);
 
     const handleDeleteChat = (e, _id, groupChat) => {
       e.preventDefault();
-      console.log("DeleteChat", _id, groupChat);
     };
     const handleMobileClose = () => dispatch(setIsMobile(false));
 
@@ -70,7 +73,7 @@ const AppLayout = () => (WrappedComponent) => {
             )}
           </Grid>
           <Grid item xs={12} sm={8} md={5} lg={6} height={"100%"}>
-            <WrappedComponent {...props} />
+            <WrappedComponent {...props} chatId={chatId}/>
           </Grid>
           <Grid
             item
