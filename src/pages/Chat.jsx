@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import { IconButton, Skeleton, Stack } from "@mui/material";
 import { blue, grayColor } from "../constants/Color";
@@ -9,11 +9,11 @@ import {
 } from "@mui/icons-material";
 import { InputBox } from "../components/styles/StyledComponents";
 import FileMenu from "../components/dialogs/FileMenu";
-import { SampleMessage } from "../constants/SampleData";
 import MessageComponent from "../components/shared/MessageComponent";
 import { GetSocket } from "../Socket";
-import { NEW_MESSAGE } from "../../../server/constants/events";
 import { useChatDetailsQuery } from "../redux/api/api";
+import { useSocketEvents } from "../hooks/hook";
+import { NEW_MESSAGE } from "../constants/events";
 
 const user = {
   _id: "1",
@@ -26,10 +26,10 @@ const Chat = ({ chatId }) => {
   const socket = GetSocket();
 
   const chatDetails = useChatDetailsQuery({ chatId, skip: !chatId });
-  console.log(chatDetails);
 
   const [message, setMessage] = useState("");
-  const members = chatDetails?.data?.chat.members;
+  const [messages, setMessages] = useState([]);
+  const members = chatDetails?.data?.chat?.members;
 
   const submitHandler = (e) => {
     e.preventDefault();
@@ -40,6 +40,15 @@ const Chat = ({ chatId }) => {
     socket.emit(NEW_MESSAGE, { chatId, members, message });
     setMessage("");
   };
+
+  const newMessagesHandler = useCallback((data) => {
+    console.log("New message received:", data);
+    setMessages((prev) => [...prev, data.message]);
+  }, []);
+
+  const eventHandler = { [NEW_MESSAGE]: newMessagesHandler };
+
+  useSocketEvents(socket, eventHandler);
 
   return chatDetails.isLoading ? (
     <Skeleton />
@@ -54,7 +63,7 @@ const Chat = ({ chatId }) => {
         height={"90%"}
         sx={{ overflowX: "hidden", overflowY: "auto" }}
       >
-        {SampleMessage.map((i) => (
+        {messages.map((i) => (
           <MessageComponent message={i} key={i._id} user={user} />
         ))}
       </Stack>
